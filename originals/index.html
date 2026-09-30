@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>NOVA'S POWER QUEST</title>
+<style>
+:root{
+  --bg1:#07163f;
+  --bg2:#0b245f;
+  --panel:rgba(10,24,66,.84);
+  --panel2:rgba(17,35,90,.88);
+  --line:rgba(255,255,255,.12);
+  --text:#f7fbff;
+  --muted:#d0dbfb;
+  --teal:#49ebff;
+  --gold:#ffce62;
+  --purple:#b576ff;
+  --green:#73f2b5;
+  --danger:#ff82b0;
+  --radius:24px;
+  --shadow:0 18px 50px rgba(0,0,0,.28);
+  --accent1:#49ebff;
+  --accent2:#8fdfff;
+  --accentGlow:rgba(73,235,255,.45);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:radial-gradient(circle at top,#13337f 0%, #08193f 55%, #06112d 100%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button{font:inherit}
+img{display:block;max-width:100%}
+.app{height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.stars,.stars:before,.stars:after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle,rgba(255,255,255,.9) 0 1px,transparent 1.8px),radial-gradient(circle,rgba(108,228,255,.6) 0 1px,transparent 1.8px);background-size:135px 135px,220px 220px;background-position:12px 22px,90px 28px;opacity:.18}
+.stars:before{transform:scale(1.15);opacity:.09}.stars:after{transform:scale(.86);opacity:.12}
+.topbar{flex:none;height:66px;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(6,13,39,.72);backdrop-filter:blur(12px);position:relative;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;font-weight:950;letter-spacing:.02em}
+.brandMark{width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--purple));display:grid;place-items:center;box-shadow:0 0 26px rgba(73,235,255,.24)}
+.brand small{display:block;color:#d2dcfc;font-size:10px;font-weight:800;letter-spacing:.12em}
+.brandName{font-size:15px}
+.headerRight{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.stat{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:13px;font-weight:900;white-space:nowrap}
+.stat.bump{animation:statBump .55s ease}
+@keyframes statBump{45%{transform:scale(1.14)}100%{transform:scale(1)}}
+.audioBtn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--text);padding:8px 10px;border-radius:12px;cursor:pointer;font-weight:900}
+.audioBtn.off{opacity:.55;filter:grayscale(.7)}
+main{flex:1;position:relative;z-index:2;padding:10px 12px 12px;overflow:hidden}
+.hidden{display:none!important}
+.screen{height:100%;max-width:1360px;margin:0 auto}
+.screenCol{height:100%;display:flex;flex-direction:column;gap:10px}
+.hero{text-align:center;flex:none}
+.hero h1{margin:0 0 4px;font-size:clamp(22px,3vw,42px);letter-spacing:-.03em}
+.hero p{margin:0;color:var(--muted);font-size:clamp(12px,1.5vw,17px)}
+
+/* MAP */
+.mapCard{flex:1;min-height:0;position:relative;border-radius:30px;overflow:hidden;border:1px solid rgba(255,255,255,.16);box-shadow:var(--shadow);background:#dff4ff;display:flex;align-items:center;justify-content:center;container-type:size}
+.mapStage{position:relative;flex:none;width:100%;aspect-ratio:1678/937}
+@supports (width:1cqw){.mapStage{width:min(100cqw,calc(100cqh*1678/937))}}
+.mapImage{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;background:#dff4ff}
+/* Stage hover: the real stage artwork (cut out of the map) lights up and cycles colours by itself */
+.stageSpot{position:absolute;z-index:4}
+.hotspot{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
+.hotspot.locked{cursor:not-allowed}
+.stageArt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transform-origin:50% 50%;transition:opacity .25s ease,transform .25s ease}
+.stageSpot.current .stageArt{opacity:1;animation:stageBeacon 2.2s ease-in-out infinite}
+.stageSpot.hover .stageArt{opacity:1;transform:scale(1.035);filter:hue-rotate(70deg) saturate(1.35) brightness(1.1) drop-shadow(0 0 14px rgba(255,255,255,.75));animation:stageHue 2.6s linear infinite}
+.stageSpot.locked.hover .stageArt{transform:none;filter:grayscale(.9) brightness(.72);animation:none}
+.stageSpot .lock{position:absolute;right:4%;top:8%;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:rgba(8,17,45,.9);border:2px solid rgba(255,255,255,.45);font-size:13px;color:white;opacity:0;transition:.2s;pointer-events:none;z-index:2}
+.stageSpot.locked .lock{opacity:1}
+@keyframes stageHue{from{filter:hue-rotate(0deg) saturate(1.35) brightness(1.1) drop-shadow(0 0 14px rgba(255,255,255,.75))}to{filter:hue-rotate(360deg) saturate(1.35) brightness(1.1) drop-shadow(0 0 14px rgba(255,255,255,.75))}}
+@keyframes stageBeacon{0%,100%{filter:brightness(1) drop-shadow(0 0 0 rgba(73,235,255,0))}50%{filter:brightness(1.07) drop-shadow(0 0 14px rgba(73,235,255,.9))}}
+.stageGlow{position:absolute;width:20%;height:auto;aspect-ratio:1/1;border-radius:50%;transform:translate(-50%,-50%) scale(.4);pointer-events:none;opacity:0;z-index:3;background:radial-gradient(circle,rgba(255,255,255,.9) 0%, rgba(255,255,255,.42) 25%, rgba(73,235,255,.28) 45%, rgba(73,235,255,0) 72%);filter:blur(2px)}
+.stageGlow.show{animation:stageBloom .8s ease-out forwards}
+.stageGlow.exit{animation:stageExit .8s ease-out forwards}
+@keyframes stageBloom{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}35%{opacity:1}100%{opacity:.0;transform:translate(-50%,-50%) scale(1.35)}}
+@keyframes stageExit{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}30%{opacity:1}100%{opacity:.0;transform:translate(-50%,-50%) scale(1.6)}}
+.mapNova{position:absolute;left:17%;top:73%;width:7.6%;min-width:50px;transform:translate(-50%,-100%);pointer-events:none;z-index:5;filter:drop-shadow(0 10px 16px rgba(0,0,0,.26))}
+.mapFooter{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;flex:none}
+.tip{padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-size:12px;font-weight:800;color:#dce6ff;text-align:center}
+
+/* QUIZ */
+.quizTop{flex:none;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.leftActions,.rightActions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.actionBtn{border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--text);padding:10px 12px;border-radius:14px;font-weight:900;cursor:pointer}
+.progressWrap{flex:1;min-width:250px;max-width:630px}
+.progressMeta{display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;font-size:12px;color:#d5e1ff;font-weight:800}
+.progress{height:10px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));box-shadow:0 0 18px var(--accentGlow);transition:width .35s ease}
+.quizGrid{flex:1;min-height:0;display:grid;grid-template-columns:1.02fr .98fr;gap:14px}
+.card{min-height:0;border-radius:28px;border:1px solid rgba(255,255,255,.15);box-shadow:var(--shadow);background:linear-gradient(180deg,rgba(18,35,90,.92),rgba(8,18,54,.92));overflow:hidden;position:relative}
+.visualCard{display:flex;flex-direction:column}
+.visualCard .badge{position:absolute;left:14px;top:14px;z-index:2;padding:7px 12px;border-radius:999px;background:rgba(5,10,31,.62);border:1px solid rgba(255,255,255,.16);font-size:11px;font-weight:900;letter-spacing:.08em}
+.sceneFrame{flex:1;min-height:0;overflow:hidden;position:relative}
+.sceneFrame:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 35%,rgba(0,0,0,.08));pointer-events:none}
+.sceneFrame img{width:100%;height:100%;object-fit:cover;animation:kenburns 10s ease-in-out infinite alternate}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.06)}}
+.assistantDock{position:absolute;right:10px;bottom:10px;display:flex;align-items:flex-end;gap:8px;z-index:4}
+.assistantBubble{max-width:160px;padding:9px 11px;border-radius:18px;background:rgba(7,12,36,.82);border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:800;color:#eaf2ff;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+.assistantDock img{width:72px;filter:drop-shadow(0 10px 18px rgba(0,0,0,.28))}
+.questionCard{display:flex;flex-direction:column;padding:18px;gap:12px;overflow:auto}
+.tag{color:var(--accent1);font-size:12px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}
+.questionCard h2{margin:0;font-size:clamp(22px,2.8vw,34px);line-height:1.18}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.option{min-height:78px;padding:13px;border-radius:18px;border:1px solid rgba(255,255,255,.15);background:linear-gradient(180deg,rgba(58,90,203,.35),rgba(27,50,132,.46));color:var(--text);display:flex;align-items:center;gap:11px;text-align:left;font-weight:850;cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease;position:relative;overflow:hidden}
+.option:hover{transform:translateY(-2px);border-color:rgba(73,235,255,.58)}
+.option:disabled{cursor:default}
+.option .key{width:33px;height:33px;flex:none;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:15px}
+.option.correct{border-color:rgba(115,242,181,.65);background:linear-gradient(180deg,rgba(25,122,88,.48),rgba(13,65,55,.62));animation:correctPop .45s ease}
+.option.wrong{border-color:rgba(255,130,176,.6);background:linear-gradient(180deg,rgba(138,49,86,.44),rgba(66,24,53,.64));animation:wrongShake .4s ease}
+@keyframes correctPop{45%{transform:scale(1.03)}}
+@keyframes wrongShake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+.hintBox,.feedback{padding:13px 14px;border-radius:18px;font-size:14px;line-height:1.55}
+.hintBox{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:#d7e2ff}
+.hintBtn{border:1px dashed rgba(255,255,255,.24);background:transparent;color:#d7e2ff;padding:9px 12px;border-radius:12px;font-weight:850;cursor:pointer}
+.feedback{display:none}.feedback.show{display:block;animation:feedbackIn .32s ease}
+.feedback.ok{background:rgba(29,153,105,.15);border:1px solid rgba(115,242,181,.35);color:#ddfff2}
+.feedback.bad{background:rgba(188,52,92,.15);border:1px solid rgba(255,130,176,.35);color:#ffd6e3}
+@keyframes feedbackIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.nextBtn{margin-top:auto;border:0;border-radius:18px;padding:15px 18px;font-weight:950;color:#07112d;background:linear-gradient(90deg,var(--accent1),var(--accent2));cursor:pointer;box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.nextBtn:disabled{opacity:.4;cursor:not-allowed}
+
+/* MODALS + OVERLAYS */
+.overlay,.modal,.introScreen{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:18px;background:rgba(2,6,22,.62);backdrop-filter:blur(10px)}
+.hiddenOverlay{display:none!important}
+.modalBox,.introCard{width:min(100%,820px);border-radius:32px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(16,33,89,.95),rgba(8,18,50,.97));box-shadow:0 25px 80px rgba(0,0,0,.34);overflow:hidden}
+.modalInner{padding:28px;text-align:center}
+.modalInner h2{margin:6px 0 10px;font-size:clamp(28px,4vw,40px)}
+.modalInner p{margin:0 0 15px;color:#d3defb;line-height:1.6}
+.bigStars{font-size:38px;letter-spacing:6px;margin-bottom:16px}
+.primaryBtn{border:0;padding:14px 22px;border-radius:16px;font-weight:950;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#07112d;cursor:pointer}
+.introVisual{height:min(39vw,260px);min-height:200px;background:#dff4ff}.introVisual img{width:100%;height:100%;object-fit:cover}
+.introCopy{padding:24px;text-align:center}.introCopy h1{margin:0 0 10px;font-size:clamp(28px,4.6vw,48px)}.introCopy p{margin:0 auto 18px;max-width:620px;color:#d6e0fb;line-height:1.7}
+.introActions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.warp{position:fixed;inset:0;z-index:38;background:radial-gradient(circle at center,rgba(102,247,255,.82) 0 3%,rgba(120,137,255,.22) 13%,rgba(8,18,54,.93) 56%,rgba(1,4,20,.98));opacity:0;pointer-events:none;transform:scale(1.35)}
+.warp.run{animation:warp .7s ease-in-out}
+@keyframes warp{0%{opacity:0;transform:scale(1.35)}40%{opacity:.92;transform:scale(.82)}100%{opacity:0;transform:scale(.45)}}
+.stageIntro{position:fixed;inset:0;z-index:37;display:grid;place-items:center;opacity:0;pointer-events:none;background:radial-gradient(circle at center,rgba(33,90,193,.18),transparent 48%)}
+.stageIntro.show{animation:introShow 1.15s ease both}
+.stageIntroCard{text-align:center;padding:24px 36px;border-radius:26px;background:rgba(7,18,72,.8);border:1px solid rgba(107,233,255,.36);box-shadow:0 18px 60px rgba(0,0,0,.28);backdrop-filter:blur(12px)}
+.stageIntroCard small{display:block;color:#8befff;font-size:12px;font-weight:900;letter-spacing:.16em;margin-bottom:6px}
+.stageIntroCard strong{display:block;font-size:clamp(28px,4vw,44px);letter-spacing:-.02em}
+@keyframes introShow{0%{opacity:0;transform:scale(.94)}18%,74%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.03)}}
+.toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;padding:12px 16px;border-radius:999px;background:rgba(4,10,30,.92);border:1px solid rgba(255,255,255,.14);color:white;font-weight:850;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .24s ease, transform .24s ease}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.rewardStar{position:fixed;z-index:80;font-size:24px;pointer-events:none;filter:drop-shadow(0 0 10px rgba(255,222,100,.8))}
+.rewardText{position:fixed;z-index:80;font-size:14px;font-weight:950;color:#fff1a6;text-shadow:0 0 14px rgba(255,222,100,.7);pointer-events:none}
+#fxCanvas{position:fixed;inset:0;z-index:70;pointer-events:none}
+
+@media (max-width: 960px){
+  .topbar{height:64px;padding:10px 12px}
+  .brandName{font-size:14px}
+  .quizGrid{grid-template-columns:1fr}
+  .visualCard{min-height:200px;max-height:34vh}
+  .questionCard{padding:16px}
+  .options{grid-template-columns:1fr}
+  .assistantDock{right:8px;bottom:8px}.assistantBubble{max-width:140px;font-size:11px}
+}
+@media (max-width: 640px){
+  .topbar{padding:8px 10px;height:60px}.brand small{display:none}.brandName{font-size:13px}.brandMark{width:34px;height:34px;border-radius:12px}
+  .headerRight{gap:8px}.stat{font-size:11px;padding:7px 9px}.audioBtn{padding:7px 9px}
+  main{padding:8px}
+  .screenCol{gap:8px}
+  .hero h1{font-size:24px}.hero p{font-size:12px}
+  .mapCard{border-radius:22px}
+  .progressWrap{min-width:200px}
+  .questionCard h2{font-size:22px}
+  .visualCard{max-height:29vh}
+  .option{min-height:68px;font-size:14px}
+  .assistantBubble{display:none}
+  .stageSpot .lock{width:22px;height:22px;font-size:11px}
+}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stars"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandMark">✦</div>
+      <div class="brandName">NOVA'S POWER QUEST<small>PLAY ON MOBILE OR DESKTOP</small></div>
+    </div>
+    <div class="headerRight">
+      <div class="stat" id="starsStat">⭐ <b id="starsCount">0</b></div>
+      <div class="stat" id="energyStat">⚡ <b id="energyCount">100</b></div>
+      <div class="stat" id="levelStat">💎 <b id="levelCount">1/3</b></div>
+      <button class="audioBtn" id="musicBtn" type="button">🎵</button>
+      <button class="audioBtn" id="sfxBtn" type="button">🔊</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="mapScreen" class="screen">
+      <div class="screenCol">
+        <div class="hero">
+          <h1>NOVA'S POWER QUEST</h1>
+          <p>Recover the 3 Power Cores through kind, smart, and teamwork-based choices.</p>
+        </div>
+        <div class="mapCard" id="mapCard">
+          <div class="mapStage" id="mapStage">
+          <img class="mapImage" src="assets/map-bg-hq.webp" alt="Three-stage fantasy map" />
+          <div class="stageGlow" id="stageGlow"></div>
+          <img class="mapNova" id="mapNova" src="assets/nova-wave.webp" alt="NOVA robot" />
+          <div class="stageSpot stage1 current" style="left:5.42%;top:58.48%;width:25.15%;height:21.34%">
+            <button class="hotspot current" data-stage="0" aria-label="Stage 1 - The Start" style="clip-path:polygon(3.5% 30.3%,4.9% 26.0%,7.5% 21.6%,11.0% 17.3%,15.2% 13.8%,20.2% 10.9%,26.4% 8.5%,33.8% 6.6%,42.4% 5.2%,51.7% 4.4%,60.5% 4.4%,68.6% 5.2%,76.2% 7.2%,82.9% 10.5%,88.2% 14.8%,92.1% 20.2%,95.2% 27.6%,97.4% 36.3%,98.3% 45.1%,97.9% 53.5%,96.8% 60.7%,94.7% 66.9%,91.4% 72.8%,87.0% 78.5%,81.4% 83.8%,74.6% 88.4%,67.0% 91.9%,58.7% 94.2%,50.4% 95.8%,42.1% 96.3%,33.8% 95.1%,25.8% 92.3%,18.6% 88.2%,12.4% 83.0%,7.8% 76.9%,4.5% 69.9%,2.7% 61.9%,2.0% 53.2%,2.0% 44.4%,2.6% 36.2%)"></button>
+            <img class="stageArt" src="assets/stage1-hover.webp" alt="" aria-hidden="true" draggable="false" />
+            <span class="lock">🔒</span>
+          </div>
+          <div class="stageSpot stage2 locked" style="left:36.23%;top:39.06%;width:22.59%;height:27.43%">
+            <button class="hotspot locked" data-stage="1" aria-label="Stage 2 - The Journey" style="clip-path:polygon(2.5% 49.0%,4.7% 38.8%,9.1% 28.8%,14.2% 21.3%,21.1% 16.4%,29.3% 13.5%,36.9% 10.7%,49.0% 9.1%,60.4% 7.7%,67.8% 5.6%,71.4% 3.4%,75.9% 5.5%,80.3% 10.3%,84.9% 16.7%,91.0% 24.6%,95.3% 34.9%,97.5% 45.6%,98.0% 54.7%,97.3% 61.1%,93.8% 68.4%,89.6% 73.8%,86.3% 77.7%,84.6% 84.0%,82.3% 90.1%,76.6% 94.3%,65.9% 96.4%,50.9% 96.9%,37.3% 95.3%,28.4% 91.8%,24.4% 86.4%,22.8% 79.0%,20.4% 73.3%,15.0% 69.4%,8.0% 66.2%,3.7% 62.3%,2.1% 57.0%)"></button>
+            <img class="stageArt" src="assets/stage2-hover.webp" alt="" aria-hidden="true" draggable="false" />
+            <span class="lock">🔒</span>
+          </div>
+          <div class="stageSpot stage3 locked" style="left:68.95%;top:35.75%;width:23.06%;height:18.25%">
+            <button class="hotspot locked" data-stage="2" aria-label="Stage 3 - The Destination" style="clip-path:polygon(2.7% 39.0%,3.9% 32.6%,6.1% 26.0%,9.2% 19.6%,12.7% 14.7%,17.2% 11.1%,23.9% 8.4%,33.0% 6.5%,45.0% 5.4%,58.6% 5.2%,69.6% 6.7%,78.1% 9.7%,84.8% 14.3%,89.6% 20.5%,93.4% 27.8%,96.1% 36.0%,97.6% 44.2%,97.9% 52.0%,96.7% 58.8%,94.3% 64.1%,91.4% 67.6%,88.2% 70.0%,85.1% 73.5%,82.3% 78.0%,80.4% 82.9%,78.9% 87.8%,76.7% 91.2%,72.4% 93.4%,62.5% 94.8%,48.7% 95.4%,37.0% 94.6%,27.6% 92.6%,22.5% 89.5%,20.4% 85.4%,18.1% 80.0%,15.3% 73.9%,11.6% 69.3%,7.4% 65.6%,4.5% 61.0%,2.8% 55.7%,2.1% 50.4%,2.2% 45.0%)"></button>
+            <img class="stageArt" src="assets/stage3-hover.webp" alt="" aria-hidden="true" draggable="false" />
+            <span class="lock">🔒</span>
+          </div>
+          </div>
+        </div>
+        <div class="mapFooter">
+          <div class="tip" id="partsTip">⚡ Power Cores: ○ ○ ○</div>
+          <div class="tip">⭐ Get at least 2 out of 3 right to unlock the next stage.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quizScreen" class="screen hidden">
+      <div class="screenCol">
+        <div class="quizTop">
+          <div class="leftActions">
+            <button class="actionBtn" id="backBtn" type="button">← Map</button>
+            <button class="actionBtn" id="restartBtn" type="button">↻ Retry Mission</button>
+          </div>
+          <div class="progressWrap">
+            <div class="progressMeta"><span id="missionName">MISSION 01</span><span id="counterText">1 / 3</span></div>
+            <div class="progress"><i id="progressFill"></i></div>
+          </div>
+          <div class="rightActions"><div class="stat" id="goalChip">Need 2/3 to unlock</div></div>
+        </div>
+
+        <div class="quizGrid">
+          <div class="card visualCard">
+            <div class="badge" id="visualBadge">KINDNESS CORE</div>
+            <div class="sceneFrame"><img id="sceneImage" src="" alt="Scenario illustration"></div>
+            <div class="assistantDock">
+              <div class="assistantBubble" id="assistantBubble">Let's think carefully.</div>
+              <img id="sceneNova" src="assets/nova-think.webp" alt="NOVA reaction" />
+            </div>
+          </div>
+          <div class="card questionCard">
+            <div class="tag" id="questionTag">CHALLENGE 01</div>
+            <h2 id="questionText"></h2>
+            <div class="options" id="options"></div>
+            <div class="hintBox" id="hintBox"></div>
+            <div class="feedback" id="feedback"></div>
+            <button class="nextBtn" id="nextBtn" type="button" disabled>CHOOSE AN ANSWER</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="introScreen" id="introScreen">
+    <div class="introCard">
+      <div class="introVisual"><img src="assets/map-bg-hq.webp" alt="Game world preview" /></div>
+      <div class="introCopy">
+        <h1>Ready to Play?</h1>
+        <p>NOVA lost the ship's power. Make the best choices, collect the 3 Power Cores, and help NOVA fly home. This game is designed to work on mobile and desktop browsers.</p>
+        <div class="introActions">
+          <button class="primaryBtn" id="startBtn" type="button">▶ Start Adventure</button>
+          <button class="actionBtn" id="resetAllBtn" type="button">Reset Progress</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hiddenOverlay" id="resultModal">
+    <div class="modalBox">
+      <div class="modalInner">
+        <div style="font-size:42px" id="modalEmoji">🚀</div>
+        <h2 id="modalTitle">Mission Complete!</h2>
+        <p id="modalText"></p>
+        <div class="bigStars" id="modalStars">⭐⭐⭐</div>
+        <button class="primaryBtn" id="continueBtn" type="button">Continue Journey</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="warp" id="warp"></div>
+  <div class="stageIntro" id="stageIntro"><div class="stageIntroCard"><small id="stageIntroKicker">MISSION 01</small><strong id="stageIntroName">KINDNESS PLANET</strong></div></div>
+  <canvas id="fxCanvas"></canvas>
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'novaPowerQuest_v3';
+const missions = [
+  {
+    name:'KINDNESS PLANET',
+    theme:'KINDNESS CORE 💗',
+    accent1:'#44e9f6', accent2:'#9df4ff',
+    core:'💗 Kindness Core',
+    questions:[
+      {q:'Your friend drops all their books. What do you do?', options:['Help pick them up','Walk past','Take a photo 😄'], answer:0, hint:'A kind choice makes someone’s difficult moment easier.', correctFb:'Kindness power detected! Helping is a small action with a big effect.', wrongFb:'A helpful hand would be the kinder move here.', image:'assets/books.webp', visual:'books'},
+      {q:'There’s one cookie left… and your friend hasn’t had one yet. What’s your move?', options:['Split it with them','Hide it quickly 😅','Eat it while maintaining eye contact 😂'], answer:0, hint:'Think of a choice that lets both of you enjoy the moment.', correctFb:'Sweet choice—literally! Sharing powers up the Kindness Core.', wrongFb:'Sharing would be the kinder choice here.', image:'assets/cookie.webp', visual:'cookie'},
+      {q:'Someone new is sitting alone. What do you do?', options:['Invite them to join','Ignore them','Stare from across the room 👀'], answer:0, hint:'A simple invitation can help someone feel welcome.', correctFb:'You turned an awkward moment into a welcoming one.', wrongFb:'That might leave them feeling even more alone.', image:'assets/newkid.webp', visual:'newkid'}
+    ]
+  },
+  {
+    name:'CHOICE GALAXY',
+    theme:'SMART CHOICE CORE 🧠',
+    accent1:'#ffd15b', accent2:'#ff9f68',
+    core:'🧠 Smart Choice Core',
+    questions:[
+      {q:'You send a message… then notice a BIG mistake. What now?', options:['Fix it and explain','Pretend nothing happened','Throw the phone into space 🚀😂'], answer:0, hint:'Mistakes happen. The smart move is to fix what you can and be clear.', correctFb:'Nice recovery! Smart choices are about fixing mistakes.', wrongFb:'Dramatic… but fixing the mistake works better.', image:'assets/message.webp', visual:'message'},
+      {q:'You’re angry and about to send a mean reply. What’s the best move?', options:['Pause before sending','SEND SEND SEND!','Add five angry emojis 😡😡😡😡😡'], answer:0, hint:'A short pause can stop a quick feeling from becoming a bigger problem.', correctFb:'Excellent pause! Self-control just saved the galaxy.', wrongFb:'That reply could make things worse. Pause first.', image:'assets/angry.webp', visual:'angry'},
+      {q:'You promised to finish something, but a game looks way more fun. What do you do?', options:['Finish what you promised first','Future me will handle it 😎','Disappear mysteriously'], answer:0, hint:'Keeping a promise means doing the responsibility before the fun thing.', correctFb:'Responsibility first. Game time after.', wrongFb:'Future-you is not impressed. Finish the promise first.', image:'assets/promise.webp', visual:'promise'}
+    ]
+  },
+  {
+    name:'TEAMWORK STATION',
+    theme:'TEAMWORK CORE 🤝',
+    accent1:'#aa7cff', accent2:'#6de8ff',
+    core:'🤝 Teamwork Core',
+    questions:[
+      {q:'Your team has 3 jobs and one teammate has nothing to do. What’s the best move?', options:['Give everyone a role','Do everything yourself','Let them supervise the snacks 😄'], answer:0, hint:'A strong team gives everyone a useful way to contribute.', correctFb:'Team systems online! Everyone has a role.', wrongFb:'A real role helps the team more.', image:'assets/roles.webp', visual:'roles'},
+      {q:'Your teammate has a different idea. What do you do first?', options:['Listen before deciding','Say “Mine is better.”','Activate dramatic silence 😶'], answer:0, hint:'Teamwork starts with hearing each other before choosing a direction.', correctFb:'Listening can turn two ideas into one stronger plan.', wrongFb:'Communication comes before deciding.', image:'assets/ideas.webp', visual:'ideas'},
+      {q:'Final mission: your team makes a mistake right before launch. What now?', options:['Solve it together','Blame someone','Run away from the spaceship 🏃🚀'], answer:0, hint:'When a team hits a problem, solve it together instead of blaming.', correctFb:'TEAMWORK CORE ACTIVATED! You solved the problem together.', wrongFb:'Running won’t repair the ship. Work together.', image:'assets/launch.webp', visual:'launch'}
+    ]
+  }
+];
+const stagePositions = [
+  {hotspot:[18.00,69.16], robot:[19.7,64.7]},
+  {hotspot:[47.53,52.77], robot:[47.7,51.0]},
+  {hotspot:[80.48,44.88], robot:[79.3,43.8]}
+];
+const partsSymbols = ['💗','🧠','🤝'];
+const assistantDefault = {
+  books:'Helping is powerful.', cookie:'Sharing can power us up.', newkid:'Welcome others in.',
+  message:'Mistakes can be fixed.', angry:'Pause… then choose.', promise:'Responsibility first.',
+  roles:'Everyone can contribute.', ideas:'Listen to every voice.', launch:'Work together to solve it.'
+};
+let state = {highestStage:0,currentStage:0,currentQ:0,stageCorrect:0,stars:0,energy:100,answered:false,finalComplete:false,musicOn:true,sfxOn:true};
+let audioCtx=null, masterGain=null, musicGain=null, sfxGain=null, musicTimer=null, musicMode='map', musicStep=0, fxIn=null, fxDelay=null, noiseBuf=null;
+let fireworksTimer=null, fireworksEnd=0;
+const $ = id=>document.getElementById(id);
+const stageEls = [...document.querySelectorAll('.hotspot')];
+
+function loadState(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) state = {...state, ...JSON.parse(raw)}; }catch(e){}
+}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+function updateHeader(){
+  $('starsCount').textContent = state.stars;
+  $('energyCount').textContent = state.energy;
+  $('levelCount').textContent = `${Math.min(state.highestStage,2)+1}/3`;
+  $('musicBtn').classList.toggle('off', !state.musicOn);
+  $('sfxBtn').classList.toggle('off', !state.sfxOn);
+}
+function setTheme(stageIndex){
+  const m = missions[stageIndex];
+  document.documentElement.style.setProperty('--accent1', m.accent1);
+  document.documentElement.style.setProperty('--accent2', m.accent2);
+  document.documentElement.style.setProperty('--accentGlow', hexToRgba(m.accent1, .42));
+}
+function hexToRgba(hex, alpha){
+  const x = hex.replace('#','');
+  const r = parseInt(x.length===3?x[0]+x[0]:x.slice(0,2),16);
+  const g = parseInt(x.length===3?x[1]+x[1]:x.slice(2,4),16);
+  const b = parseInt(x.length===3?x[2]+x[2]:x.slice(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+function updateParts(){
+  const lit = state.finalComplete ? 3 : state.highestStage + 1;
+  $('partsTip').innerHTML = `⚡ Power Cores: ${partsSymbols.map((s,i)=>`<span style="font-size:18px;opacity:${i<lit?1:.28}">${s}</span>`).join(' ')}`;
+}
+function positionNova(stageIndex){
+  const p = stagePositions[stageIndex].robot;
+  $('mapNova').style.left = p[0] + '%';
+  $('mapNova').style.top = p[1] + '%';
+}
+function showStageGlow(stageIndex, exit=false){
+  const glow = $('stageGlow');
+  const p = stagePositions[stageIndex].hotspot;
+  glow.style.left = p[0] + '%';
+  glow.style.top = p[1] + '%';
+  glow.className = 'stageGlow';
+  void glow.offsetWidth;
+  glow.classList.add(exit ? 'exit' : 'show');
+}
+function updateMap(){
+  updateParts();
+  stageEls.forEach((el,i)=>{
+    const flags = {locked: i > state.highestStage, current: i === state.currentStage, done: i < state.highestStage || (state.finalComplete && i===2)};
+    Object.keys(flags).forEach(k=>{ el.classList.toggle(k, flags[k]); el.parentElement.classList.toggle(k, flags[k]); });
+  });
+  positionNova(state.currentStage);
+}
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._timer); toast._timer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function runWarp(){ const w=$('warp'); w.classList.remove('run'); void w.offsetWidth; w.classList.add('run'); }
+function showStageIntro(stageIndex){
+  $('stageIntroKicker').textContent = `MISSION ${String(stageIndex+1).padStart(2,'0')}`;
+  $('stageIntroName').textContent = missions[stageIndex].name;
+  const n = $('stageIntro'); n.classList.remove('show'); void n.offsetWidth; n.classList.add('show');
+}
+function animateNovaTo(fromStage, toStage){
+  return new Promise(resolve=>{
+    const el = $('mapNova');
+    el.src = 'assets/nova-celebrate.webp';
+    const a = stagePositions[fromStage].robot, b = stagePositions[toStage].robot;
+    const frames = [];
+    const steps = 42;
+    for(let i=0;i<=steps;i++){
+      const t = i/steps;
+      const e = t*t*(3-2*t);
+      const x = a[0] + (b[0]-a[0]) * e;
+      const y = a[1] + (b[1]-a[1]) * e - Math.sin(t*Math.PI)*4;
+      frames.push({left:x+'%', top:y+'%', transform:`translate(-50%,-100%) rotate(${Math.sin(t*Math.PI)*7-2}deg)`});
+    }
+    playWhoosh();
+    const anim = el.animate(frames,{duration:1700,easing:'linear',fill:'forwards'});
+    anim.onfinish = ()=>{ anim.cancel(); positionNova(toStage); el.src='assets/nova-wave.webp'; resolve(); };
+  });
+}
+
+function openStage(stageIndex){
+  if(stageIndex > state.highestStage){
+    shake(stageEls[stageIndex]); playWrong(); toast('Finish the previous stage first.'); return;
+  }
+  stageEls.forEach(e=>e.parentElement.classList.remove('hover'));
+  state.currentStage = stageIndex; state.currentQ = 0; state.stageCorrect = 0; state.answered = false;
+  saveState(); updateMap(); setTheme(stageIndex); showStageGlow(stageIndex, false); playUnlock();
+  setTimeout(()=>{
+    runWarp();
+    $('mapScreen').classList.add('hidden');
+    $('quizScreen').classList.remove('hidden');
+    showStageIntro(stageIndex);
+    renderQuestion();
+    startMusic(stageIndex===2?'final':'quiz');
+  }, 480);
+}
+function backToMap(){
+  if(!confirm('Leave this mission? Your progress in it will be lost.')) return;
+  playClick(); runWarp(); showStageGlow(state.currentStage,true);
+  setTimeout(()=>{
+    $('quizScreen').classList.add('hidden');
+    $('mapScreen').classList.remove('hidden');
+    state.currentQ=0; state.stageCorrect=0; state.answered=false; saveState();
+    updateMap(); updateHeader(); startMusic('map');
+  }, 300);
+}
+function restartMission(){
+  if(!confirm('Restart this mission?')) return;
+  playClick();
+  state.currentQ=0; state.stageCorrect=0; state.answered=false;
+  renderQuestion();
+}
+function shuffle(a){ const arr=[...a]; for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+function renderQuestion(){
+  const mission = missions[state.currentStage], item = mission.questions[state.currentQ];
+  state.answered = false; setTheme(state.currentStage);
+  $('missionName').textContent = `MISSION ${String(state.currentStage+1).padStart(2,'0')} • ${mission.name}`;
+  $('counterText').textContent = `${state.currentQ+1} / ${mission.questions.length}`;
+  $('goalChip').textContent = `Need 2/${mission.questions.length} to unlock`;
+  $('progressFill').style.width = (((state.currentQ+1)/mission.questions.length)*100)+'%';
+  $('visualBadge').textContent = mission.theme;
+  $('sceneImage').src = item.image;
+  $('sceneImage').alt = item.q;
+  $('sceneNova').src = 'assets/nova-think.webp';
+  $('assistantBubble').textContent = assistantDefault[item.visual] || 'Think carefully.';
+  $('questionTag').textContent = `CHALLENGE ${String(state.currentQ+1).padStart(2,'0')}`;
+  $('questionText').textContent = item.q;
+  $('hintBox').innerHTML = `<button class="hintBtn" id="hintBtn" type="button">💡 Need a hint? (-2 ⚡)</button>`;
+  $('hintBtn').onclick = ()=>{ state.energy = Math.max(0, state.energy - 2); updateHeader(); saveState(); $('hintBox').innerHTML = `<div>💡 <b>Hint:</b> ${item.hint}</div>`; playClick(); };
+  $('feedback').className = 'feedback'; $('feedback').innerHTML = '';
+  $('nextBtn').disabled = true; $('nextBtn').textContent = 'CHOOSE AN ANSWER';
+  const optionsWrap = $('options'); optionsWrap.innerHTML = '';
+  const order = shuffle(item.options.map((_,i)=>i));
+  order.forEach((idx,pos)=>{
+    const b = document.createElement('button');
+    b.className = 'option'; b.type='button'; b.dataset.answer = idx;
+    b.innerHTML = `<span class="key">${String.fromCharCode(65+pos)}</span><span>${item.options[idx]}</span>`;
+    b.onclick = ()=> chooseAnswer(idx,b); optionsWrap.appendChild(b);
+  });
+  updateHeader();
+  playSceneCue(item.visual);
+}
+function chooseAnswer(choiceIndex, btn){
+  if(state.answered) return;
+  state.answered = true;
+  const item = missions[state.currentStage].questions[state.currentQ];
+  document.querySelectorAll('.option').forEach(b=>{ b.disabled=true; if(+b.dataset.answer===item.answer) b.classList.add('correct'); });
+  const feedback = $('feedback');
+  if(choiceIndex === item.answer){
+    btn.classList.add('correct');
+    state.stageCorrect++; state.energy = Math.min(100, state.energy + 5); state.stars++;
+    $('sceneNova').src = 'assets/nova-celebrate.webp';
+    $('assistantBubble').textContent = 'Yes! That powers us up.';
+    feedback.className = 'feedback show ok';
+    feedback.innerHTML = `<b>NOVA:</b> ${item.correctFb}<br><span style="opacity:.9">⭐ +1 star • ⚡ +5 energy</span>`;
+    $('nextBtn').textContent = state.currentQ === missions[state.currentStage].questions.length-1 ? 'ACTIVATE CORE' : 'NEXT CHALLENGE →';
+    animateStarReward(btn); playCorrect(); sparkleOption(btn); bumpStat('starsStat');
+  }else{
+    btn.classList.add('wrong');
+    state.energy = Math.max(0, state.energy - 7);
+    $('sceneNova').src = 'assets/nova-dizzy.webp';
+    $('assistantBubble').textContent = 'Oops. Let’s choose more wisely.';
+    feedback.className = 'feedback show bad';
+    feedback.innerHTML = `<b>NOVA:</b> ${item.wrongFb}<br><span style="opacity:.9">⚡ -7 energy</span>`;
+    $('nextBtn').textContent = state.currentQ === missions[state.currentStage].questions.length-1 ? 'CHECK CORE' : 'CONTINUE →';
+    playWrong();
+  }
+  $('nextBtn').disabled = false;
+  updateHeader(); saveState();
+}
+function nextStep(){ if(!state.answered) return; state.currentQ++; if(state.currentQ < missions[state.currentStage].questions.length) renderQuestion(); else finishMission(); }
+function finishMission(){
+  const total = missions[state.currentStage].questions.length;
+  const passed = state.stageCorrect >= 2;
+  const earned = state.stageCorrect === total ? 3 : (passed ? 2 : state.stageCorrect >=1 ? 1 : 0);
+  let msg=''; let title = passed ? 'CORE ACTIVATED!' : 'CORE UNSTABLE!'; let emoji = passed ? '✨' : '😵';
+  let nextStage = '';
+  if(passed){
+    if(state.currentStage < 2){
+      if(state.highestStage === state.currentStage){ state.highestStage = state.currentStage + 1; nextStage = String(state.highestStage); }
+      msg = `${missions[state.currentStage].core} recovered! ${missions[state.currentStage+1].name} is now unlocked.`;
+    } else {
+      state.finalComplete = true;
+      title = 'POWER QUEST COMPLETE!'; emoji='🚀';
+      msg = 'All 3 Power Cores are online! NOVA can fly home now. Amazing job!';
+      startFireworks(12000);
+    }
+  } else {
+    msg = `You got ${state.stageCorrect}/${total}. You need at least 2 correct answers to unlock the next stage. Try again!`;
+  }
+  $('modalEmoji').textContent = emoji;
+  $('modalTitle').textContent = title;
+  $('modalText').textContent = msg;
+  $('modalStars').textContent = '⭐'.repeat(Math.max(earned,1));
+  $('continueBtn').dataset.nextStage = nextStage;
+  $('continueBtn').dataset.fromStage = String(state.currentStage);
+  $('resultModal').classList.remove('hiddenOverlay');
+  updateHeader(); saveState(); playComplete();
+}
+async function continueJourney(){
+  $('resultModal').classList.add('hiddenOverlay');
+  runWarp();
+  const from = +$('continueBtn').dataset.fromStage;
+  const nextStage = $('continueBtn').dataset.nextStage;
+  showStageGlow(from, true);
+  setTimeout(async ()=>{
+    $('quizScreen').classList.add('hidden'); $('mapScreen').classList.remove('hidden');
+    updateMap(); updateHeader(); startMusic(state.finalComplete ? 'victory' : 'map');
+    if(nextStage !== ''){
+      const next = +nextStage;
+      positionNova(from);
+      await animateNovaTo(from, next);
+      state.currentStage = next; updateMap(); showStageGlow(next,false); playUnlock(); saveState();
+    }
+    if(state.finalComplete){ pulseNovaCelebration(); }
+  }, 280);
+}
+function pulseNovaCelebration(){ $('mapNova').animate([{transform:'translate(-50%,-100%) scale(1)'},{transform:'translate(-50%,-100%) scale(1.16) rotate(5deg)'},{transform:'translate(-50%,-100%) scale(1)'}],{duration:900,easing:'ease-in-out'}); }
+
+function shake(el){ el.parentElement.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:280}); }
+function bumpStat(id){ const el=$(id); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+function sparkleOption(btn){ const rect=btn.getBoundingClientRect(); for(let i=0;i<6;i++){ const s=document.createElement('div'); s.className='rewardText'; s.textContent='✦'; s.style.left=(rect.left+30+Math.random()*(rect.width-60))+'px'; s.style.top=(rect.top+18+Math.random()*(rect.height-36))+'px'; document.body.appendChild(s); const dx=(Math.random()-.5)*50, dy=-20-Math.random()*35; s.animate([{transform:'translate(0,0) scale(.5)',opacity:0},{transform:`translate(${dx}px,${dy}px) scale(1.2)`,opacity:1},{transform:`translate(${dx*1.25}px,${dy-20}px) scale(.6)`,opacity:0}],{duration:700,easing:'ease-out'}).onfinish=()=>s.remove(); } }
+function animateStarReward(btn){
+  const from=btn.getBoundingClientRect(), to=$('starsStat').getBoundingClientRect();
+  const sx=from.left+from.width*.5, sy=from.top+from.height*.45, tx=to.left+to.width*.5, ty=to.top+to.height*.5;
+  const star=document.createElement('div'); star.className='rewardStar'; star.textContent='⭐'; star.style.left=sx+'px'; star.style.top=sy+'px';
+  const txt=document.createElement('div'); txt.className='rewardText'; txt.textContent='+1 STAR'; txt.style.left=(sx-8)+'px'; txt.style.top=(sy-24)+'px';
+  document.body.appendChild(star); document.body.appendChild(txt);
+  txt.animate([{transform:'translateY(8px)',opacity:0},{transform:'translateY(-16px)',opacity:1},{transform:'translateY(-28px)',opacity:0}],{duration:900,easing:'ease-out'}).onfinish=()=>txt.remove();
+  star.animate([{transform:'translate(0,0) scale(.7)',opacity:0},{transform:'translate(0,-18px) scale(1.25)',opacity:1,offset:.2},{transform:`translate(${tx-sx}px,${ty-sy}px) scale(.62)`,opacity:1}],{duration:900,easing:'cubic-bezier(.2,.9,.2,1)'}).onfinish=()=>{ star.remove(); bumpStat('starsStat'); };
+}
+
+/* ===== Background music: playful toy-xylophone / chiptune loops =====
+   Every mood is a 4-bar loop, 16 steps per bar. Melody notes are [step, midiNote, lengthInSteps]. */
+const midi = n => 440*Math.pow(2,(n-69)/12);
+const MOODS = {
+  // MAP: bright & bouncy adventure theme (C major, I-vi-IV-V)
+  map:{ bpm:104, gain:.62, swing:.14, lead:'pluck', leadVol:.085, arpVol:.03, bassVol:.15, fill:true,
+    roots:[48,45,53,55], chords:[[60,64,67],[57,60,64],[65,69,72],[67,71,74]],
+    arp:[0,1,2,3,2,1,2,1],
+    bass:[[0,0,2],[2,12,1],[4,0,2],[6,12,1],[8,0,2],[10,12,1],[12,7,2],[14,12,1]],
+    drums:{kick:[0,8],kickVol:.42,snare:[4,12],snareVol:.09,hat:[2,6,10,14],hatVol:.03},
+    melody:[
+      [ [[0,76,2],[3,79,1],[4,84,3],[8,79,2],[10,76,2],[12,79,4]],
+        [[0,81,2],[3,76,1],[4,72,3],[8,76,2],[10,81,2],[12,76,4]],
+        [[0,77,2],[3,81,1],[4,84,3],[8,81,2],[10,77,2],[12,81,4]],
+        [[0,79,2],[3,83,1],[4,79,2],[6,74,2],[8,79,2],[10,83,2],[12,84,4]] ],
+      [ [[0,84,2],[2,83,1],[3,84,1],[4,79,4],[8,76,2],[10,79,2],[12,84,4]],
+        [[0,81,2],[2,79,1],[3,81,1],[4,84,4],[8,81,2],[10,79,2],[12,76,4]],
+        [[0,77,2],[2,79,1],[3,81,1],[4,77,4],[8,72,2],[10,77,2],[12,81,4]],
+        [[0,79,2],[2,81,1],[3,83,1],[4,79,4],[8,74,2],[10,79,2],[12,83,2],[14,79,2]] ]
+    ] },
+  // QUIZ: lighter and quieter so kids can read (G major), melody rests every other loop
+  quiz:{ bpm:92, gain:.5, swing:.18, lead:'pluck', leadVol:.07, arpVol:.034, bassVol:.12, fill:false,
+    roots:[55,52,48,50], chords:[[67,71,74],[64,67,71],[64,67,72],[62,66,69]],
+    arp:[0,2,1,2,0,2,1,2],
+    bass:[[0,0,3],[4,7,2],[8,0,3],[12,7,2]],
+    drums:{kick:[0,10],kickVol:.3,tick:[4,12],hat:[2,6,10,14],hatVol:.022},
+    melody:[
+      [ [[0,74,2],[2,79,2],[4,83,4],[10,79,2],[12,74,4]],
+        [[0,76,2],[2,79,2],[4,83,4],[10,79,2],[12,76,4]],
+        [[0,76,2],[2,79,2],[4,84,4],[10,79,2],[12,76,4]],
+        [[0,78,2],[2,81,2],[4,78,4],[8,74,2],[10,78,2],[12,74,4]] ],
+      null
+    ] },
+  // FINAL: faster and heroic (Am-F-C-G) with a chiptune lead
+  final:{ bpm:122, gain:.62, swing:0, lead:'chip', leadVol:.05, arpVol:.034, bassVol:.17, fill:true,
+    roots:[45,41,48,43], chords:[[57,60,64],[57,60,65],[60,64,67],[59,62,67]],
+    arp:[0,1,2,3,0,1,2,3],
+    bass:[[0,0,2],[2,0,2],[4,12,2],[6,0,2],[8,0,2],[10,0,2],[12,12,2],[14,7,2]],
+    drums:{kick:[0,4,8,12],kickVol:.4,snare:[4,12],snareVol:.11,hat:[2,6,10,14],hatVol:.038},
+    melody:[
+      [ [[0,81,3],[3,84,1],[4,88,4],[8,84,2],[10,81,2],[12,84,4]],
+        [[0,84,3],[3,81,1],[4,77,4],[8,81,2],[10,84,2],[12,81,4]],
+        [[0,79,3],[3,84,1],[4,88,4],[8,84,2],[10,79,2],[12,84,4]],
+        [[0,83,2],[2,86,2],[4,83,2],[6,79,2],[8,74,4],[12,79,4]] ],
+      null
+    ] },
+  // VICTORY: party fanfare (C-F-G-C)
+  victory:{ bpm:128, gain:.66, fade:.12, swing:.08, lead:'both', leadVol:.075, arpVol:.036, bassVol:.16, fill:true,
+    roots:[48,53,55,48], chords:[[60,64,67],[60,65,69],[59,62,67],[60,64,67]],
+    arp:[0,1,2,3,2,3,2,1],
+    bass:[[0,0,2],[3,12,1],[4,7,2],[8,0,2],[11,12,1],[12,7,2]],
+    drums:{kick:[0,8,10],kickVol:.4,snare:[4,12],snareVol:.1,hat:[0,2,4,6,8,10,12,14],hatVol:.03},
+    melody:[
+      [ [[0,72,2],[2,76,2],[4,79,2],[6,84,2],[8,79,2],[10,84,2],[12,88,4]],
+        [[0,77,2],[2,81,2],[4,84,2],[6,89,2],[8,84,2],[10,81,2],[12,84,4]],
+        [[0,79,2],[2,83,2],[4,86,2],[6,83,2],[8,86,2],[10,83,2],[12,86,4]],
+        [[0,84,4],[4,79,2],[6,84,2],[8,88,6]] ],
+      null
+    ] }
+};
+// the second slot of `melody` is the loop variation; null means "play the first one again" for final/victory
+MOODS.final.melody[1] = MOODS.final.melody[0];
+MOODS.victory.melody[1] = MOODS.victory.melody[0];
+
+let seqStep=0, nextNote=0;
+function ensureAudio(){
+  if(!audioCtx){
+    const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return null;
+    audioCtx = new Ctx();
+    masterGain = audioCtx.createGain(); musicGain = audioCtx.createGain(); sfxGain = audioCtx.createGain();
+    masterGain.gain.value = .8; musicGain.gain.value = .55; sfxGain.gain.value = .32;
+    const comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 20; comp.ratio.value = 5; comp.attack.value = .005; comp.release.value = .2;
+    musicGain.connect(masterGain); sfxGain.connect(masterGain); masterGain.connect(comp); comp.connect(audioCtx.destination);
+  }
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  initFx();
+  return audioCtx;
+}
+function initFx(){
+  if(!audioCtx || fxIn) return;
+  fxIn = audioCtx.createGain();
+  const lp = audioCtx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3400;
+  const dl = audioCtx.createDelay(1), fb = audioCtx.createGain(), wet = audioCtx.createGain();
+  dl.delayTime.value=.43; fb.gain.value=.28; wet.gain.value=.26; fxDelay = dl;
+  fxIn.connect(lp); lp.connect(musicGain); lp.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(musicGain);
+  noiseBuf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate*.3), audioCtx.sampleRate);
+  const b = noiseBuf.getChannelData(0); for(let i=0;i<b.length;i++) b[i] = Math.random()*2-1;
+}
+function tone(freq,dur=.14,when=0,type='sine',vol=.08,target='sfx'){
+  if((target==='music'&&!state.musicOn)||(target!=='music'&&!state.sfxOn)) return;
+  const ctx = ensureAudio(); if(!ctx) return;
+  const dest = target==='music' ? musicGain : sfxGain;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, ctx.currentTime+when);
+  g.gain.setValueAtTime(.0001, ctx.currentTime+when); g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime+when+.02); g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime+when+dur);
+  o.connect(g); g.connect(dest); o.start(ctx.currentTime+when); o.stop(ctx.currentTime+when+dur+.03);
+}
+
+/* music voices */
+function pluck(freq,t,dur,vol,boing){
+  // toy xylophone: triangle body + a short bright overtone; optional tiny "boing" pitch drop for a playful feel
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  const o2=audioCtx.createOscillator(), g2=audioCtx.createGain();
+  const len=Math.max(dur,.18);
+  o.type='triangle'; o2.type='sine';
+  if(boing){ o.frequency.setValueAtTime(freq*1.035,t); o.frequency.exponentialRampToValueAtTime(freq,t+.04); }
+  else o.frequency.setValueAtTime(freq,t);
+  o2.frequency.setValueAtTime(freq*4,t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.008); g.gain.exponentialRampToValueAtTime(.0001,t+len);
+  g2.gain.setValueAtTime(.0001,t); g2.gain.exponentialRampToValueAtTime(vol*.45,t+.004); g2.gain.exponentialRampToValueAtTime(.0001,t+.09);
+  o.connect(g); o2.connect(g2); g.connect(fxIn); g2.connect(fxIn);
+  o.start(t); o.stop(t+len+.05); o2.start(t); o2.stop(t+.12);
+}
+function chip(freq,t,dur,vol){
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type='square'; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.012);
+  g.gain.setValueAtTime(vol*.8,t+Math.max(.02,dur*.7)); g.gain.exponentialRampToValueAtTime(.0001,t+dur+.08);
+  o.connect(g); g.connect(fxIn); o.start(t); o.stop(t+dur+.12);
+}
+function lead(mood,freq,t,dur){
+  if(mood.lead==='chip') chip(freq,t,dur,mood.leadVol);
+  else if(mood.lead==='both'){ pluck(freq,t,dur,mood.leadVol,true); chip(freq,t,dur,mood.leadVol*.45); }
+  else pluck(freq,t,dur,mood.leadVol,true);
+}
+function bassNote(freq,t,dur,vol){
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.012); g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(dur,.12));
+  o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+Math.max(dur,.12)+.04);
+}
+function kick(t,vol){
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(48,t+.12);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+.2);
+  o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+.22);
+}
+function noiseHit(t,type,freq,q,vol,dur){
+  if(!noiseBuf) return;
+  const n=audioCtx.createBufferSource(), f=audioCtx.createBiquadFilter(), g=audioCtx.createGain();
+  n.buffer=noiseBuf; f.type=type; f.frequency.value=freq; f.Q.value=q;
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  n.connect(f); f.connect(g); g.connect(musicGain); n.start(t,Math.random()*.1); n.stop(t+dur+.02);
+}
+function snare(t,vol){
+  noiseHit(t,'bandpass',1900,.8,vol,.12);
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(130,t+.08);
+  g.gain.setValueAtTime(vol*.6,t); g.gain.exponentialRampToValueAtTime(.001,t+.09);
+  o.connect(g); g.connect(musicGain); o.start(t); o.stop(t+.1);
+}
+function hat(t,vol){ noiseHit(t,'highpass',7000,.7,vol,.045); }
+function tick(t,vol){ noiseHit(t,'bandpass',3200,3,vol,.035); }
+
+function mstep(mood, step, t, d){
+  const s = step % 16, bar = Math.floor(step/16) % 4, loop = Math.floor(step/64);
+  const tt = t + ((s % 2) ? mood.swing*d : 0);   // gentle swing on the off-16ths = bounce
+  const chord = mood.chords[bar], root = mood.roots[bar], dr = mood.drums;
+  // drums
+  if(dr.kick.includes(s)) kick(tt, dr.kickVol);
+  if(dr.snare && dr.snare.includes(s)) snare(tt, dr.snareVol);
+  if(dr.tick && dr.tick.includes(s)) tick(tt, .05);
+  if(dr.hat.includes(s)) hat(tt, s % 4 === 2 ? dr.hatVol*1.4 : dr.hatVol);
+  if(mood.fill && bar === 3 && s >= 12) snare(tt, .04 + (s-12)*.035);   // little drum roll at the end of each loop
+  // bass
+  for(const [bs,off,len] of mood.bass){ if(bs === s) bassNote(midi(root+off), tt, len*d*.92, mood.bassVol); }
+  // sparkly arpeggio (every 8th note)
+  if(s % 2 === 0){
+    const idx = mood.arp[(s/2) % mood.arp.length];
+    pluck(midi(idx === 3 ? chord[0]+12 : chord[idx]), tt, d*3, mood.arpVol, false);
+  }
+  // melody
+  const mel = mood.melody[loop % 2];
+  if(mel){ for(const [ms,n,len] of mel[bar]){ if(ms === s) lead(mood, midi(n), tt, Math.max(.12, len*d*.95)); } }
+}
+function musicScheduler(){
+  if(!audioCtx) return;
+  const mood = MOODS[musicMode] || MOODS.map, d = 60/mood.bpm/4;
+  if(nextNote < audioCtx.currentTime - .1) nextNote = audioCtx.currentTime + .05;   // re-sync after the tab was asleep
+  while(nextNote < audioCtx.currentTime + .3){ mstep(mood, seqStep, nextNote, d); nextNote += d; seqStep++; }
+}
+function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer = null; } }
+function startMusic(mode){
+  musicMode = mode; ensureAudio(); stopMusic(); if(!state.musicOn || !audioCtx) return;
+  const mood = MOODS[mode] || MOODS.map, now = audioCtx.currentTime;
+  musicGain.gain.cancelScheduledValues(now);
+  musicGain.gain.setValueAtTime(.0001, now);
+  musicGain.gain.linearRampToValueAtTime(mood.gain, now + (mood.fade || .5));
+  if(fxDelay) fxDelay.delayTime.setValueAtTime(60/mood.bpm*.75, now);   // echo locked to the beat (dotted 8th)
+  seqStep = 0; nextNote = now + .08; musicTimer = setInterval(musicScheduler, 25);
+  if(mode === 'victory') [523,659,784,1047,784,1047,1319].forEach((n,i)=>tone(n,.32,i*.13,'triangle',.1,'music'));
+}
+function playClick(){ tone(520,.07,0,'triangle',.11); tone(760,.09,.045,'sine',.08); }
+function playCorrect(){ [523,659,784,1047].forEach((n,i)=>tone(n,.18,i*.075,'triangle',.16)); }
+function playWrong(){ tone(240,.16,0,'sawtooth',.08); tone(190,.22,.09,'triangle',.07); }
+function playUnlock(){ [392,523,659,880].forEach((n,i)=>tone(n,.23,i*.08,'sine',.14)); }
+function playWhoosh(){ [180,260,390,590].forEach((n,i)=>tone(n,.12,i*.04,'triangle',.055)); }
+function playPop(){ tone(880+Math.random()*500,.08,0,'triangle',.06); tone(1320+Math.random()*400,.06,.02,'sine',.04); }
+function playComplete(){ [392,523,659,784,1047].forEach((n,i)=>tone(n,.28,i*.09,'triangle',.14)); }
+function playSceneCue(kind){
+  if(!state.sfxOn) return; ensureAudio();
+  const cues = {
+    books:[420,520,640], cookie:[660,880], newkid:[392,587,659],
+    message:[740,620], angry:[240,280,220], promise:[330,494], roles:[320,400,480], ideas:[523,784,1047], launch:[220,330,440,660]
+  };
+  (cues[kind]||[520]).forEach((n,i)=>tone(n,.08+i*.01,i*.05, i===0?'triangle':'sine', .06));
+}
+$('musicBtn').onclick = ()=>{ ensureAudio(); state.musicOn = !state.musicOn; updateHeader(); saveState(); if(state.musicOn) startMusic(musicMode); else stopMusic(); if(state.musicOn) playClick(); };
+$('sfxBtn').onclick = ()=>{ ensureAudio(); state.sfxOn = !state.sfxOn; updateHeader(); saveState(); if(state.sfxOn) playClick(); };
+
+/* Fireworks */
+const canvas = $('fxCanvas'), ctx = canvas.getContext('2d');
+let particles=[];
+function resizeCanvas(){ canvas.width = innerWidth * devicePixelRatio; canvas.height = innerHeight * devicePixelRatio; canvas.style.width = innerWidth+'px'; canvas.style.height = innerHeight+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
+function rocket(){ particles.push({type:'rocket',x:innerWidth*(.15+Math.random()*.7),y:innerHeight+20,vx:(Math.random()-.5)*1.2,vy:-(8+Math.random()*3),life:80,color:`hsl(${Math.random()*360} 100% 70%)`}); }
+function burst(x,y){ playPop(); for(let i=0;i<46;i++){ const a=(Math.PI*2/46)*i + Math.random()*.3; const sp=2+Math.random()*3.8; particles.push({type:'spark',x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:.04,life:45+Math.random()*20,size:2+Math.random()*2,color:`hsl(${Math.random()*360} 100% ${62+Math.random()*20}%)`}); } }
+function startFireworks(ms){ fireworksEnd = performance.now()+ms; if(fireworksTimer) return; playComplete(); fireworksTimer = requestAnimationFrame(fireLoop); }
+function fireLoop(now){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  if(now < fireworksEnd && Math.random() < .08) rocket();
+  for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; if(p.type==='rocket'){ p.x+=p.vx; p.y+=p.vy; p.vy += .12; p.life--; ctx.fillStyle='#fff'; ctx.fillRect(p.x,p.y,2,10); if(p.life<30 || p.vy>=-1){ burst(p.x,p.y); particles.splice(i,1); } } else { p.x+=p.vx; p.y+=p.vy; p.vy += p.g; p.life--; ctx.globalAlpha=Math.max(p.life/65,0); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; if(p.life<=0) particles.splice(i,1); } }
+  if(now < fireworksEnd || particles.length){ fireworksTimer = requestAnimationFrame(fireLoop); } else { fireworksTimer = null; ctx.clearRect(0,0,innerWidth,innerHeight); }
+}
+
+/* Init & events */
+function resetProgress(){
+  state = {highestStage:0,currentStage:0,currentQ:0,stageCorrect:0,stars:0,energy:100,answered:false,finalComplete:false,musicOn:true,sfxOn:true};
+  saveState(); updateHeader(); updateMap(); setTheme(0); toast('Progress reset.');
+}
+$('startBtn').onclick = ()=>{ $('introScreen').classList.add('hidden'); ensureAudio(); startMusic('map'); playUnlock(); };
+$('resetAllBtn').onclick = ()=> resetProgress();
+$('backBtn').onclick = ()=> backToMap();
+$('restartBtn').onclick = ()=> restartMission();
+$('nextBtn').onclick = ()=> nextStep();
+$('continueBtn').onclick = ()=> continueJourney();
+stageEls.forEach(el=> el.addEventListener('click', ()=> openStage(+el.dataset.stage)));
+stageEls.forEach(el=>{
+  const spot = el.parentElement;
+  el.addEventListener('pointerenter', ()=> spot.classList.add('hover'));
+  el.addEventListener('pointerleave', ()=> spot.classList.remove('hover'));
+  el.addEventListener('focus', ()=>{ if(el.matches(':focus-visible')) spot.classList.add('hover'); });
+  el.addEventListener('blur', ()=> spot.classList.remove('hover'));
+});
+window.addEventListener('resize', ()=>{ resizeCanvas(); updateMap(); });
+window.addEventListener('keydown', e=>{
+  if(!$('quizScreen').classList.contains('hidden') && $('resultModal').classList.contains('hiddenOverlay')){
+    const opts=[...document.querySelectorAll('.option')];
+    const key = e.key.toUpperCase(); const idx = ({'1':0,'2':1,'3':2,'A':0,'B':1,'C':2})[key];
+    if(idx!==undefined && opts[idx] && !opts[idx].disabled) opts[idx].click();
+    if(e.key==='Enter' && !$('nextBtn').disabled) $('nextBtn').click();
+  }
+});
+document.addEventListener('pointerdown', ()=>{ ensureAudio(); if(!musicTimer && state.musicOn) startMusic($('mapScreen').classList.contains('hidden') ? (state.currentStage===2?'final':'quiz') : (state.finalComplete?'victory':'map')); }, {once:true});
+
+resizeCanvas(); loadState(); updateHeader(); updateMap(); setTheme(state.currentStage);
+if(state.highestStage===0 && state.stars===0 && !state.finalComplete) $('introScreen').classList.remove('hidden'); else $('introScreen').classList.add('hidden');
+</script>
+</body>
+</html>
